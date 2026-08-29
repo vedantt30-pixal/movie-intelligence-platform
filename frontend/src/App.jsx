@@ -121,21 +121,18 @@ function App() {
                 </div>
 
                 {/* Poster */}
-                <div className="poster-wrapper">
-                  {recommendation.poster_url ? (
-                    <img
-                      src={recommendation.poster_url}
+                  <div className="poster-wrapper">
+                      <img
+                      src={recommendation.poster_url || "/movie-placeholder.svg"}
                       alt={recommendation.title}
                       className="movie-poster"
-                    />
-                  ) : (
-                    <div className="poster-placeholder">
-                      <span>🎬</span>
-                      <p>No Poster</p>
-                    </div>
-                  )}
+                      onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/movie-placeholder.svg";
+                      }}
+                      />
 
-                  <div className="similarity-badge">
+                    <div className="similarity-badge">
                     {(recommendation.similarity_score * 100).toFixed(
                       1
                     )}
