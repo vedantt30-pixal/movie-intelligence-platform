@@ -8,21 +8,26 @@ from threading import Lock
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://movie-intelligence-platform-1.onrender.com",
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://movie-intelligence-platform-1.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 # Make the repo root importable regardless of where this process is
 # launched from. Without this, `uvicorn backend.main:app` (run from
