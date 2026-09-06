@@ -1,4 +1,6 @@
 import ast
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -127,7 +129,73 @@ class MovieRecommendationEngine:
             for i, title in enumerate(self.df["title"])
         }
 
-    def get_recommendations(self, title, n=10):
+        # Precompute title tokens once, at build time, instead of
+        # re-tokenizing candidate titles on every query.
+        self.title_tokens = [
+            self._title_tokens(t) for t in self.df["title"]
+        ]
+
+        # Document frequency of each title word across the whole corpus.
+        # Used to tell "distinctive" franchise words (thor, hulk: DF 2)
+        # apart from generic words (up, man, war: DF 16+) so the family
+        # check doesn't fire on incidental shared vocabulary.
+        title_word_df = {}
+        for tokens in self.title_tokens:
+            for word in tokens:
+                title_word_df[word] = title_word_df.get(word, 0) + 1
+        self.title_word_df = title_word_df
+
+    # ==================================================
+    # Franchise / title-family diversity
+    # ==================================================
+    #
+    # Without this, "similar movies" for a superhero film tend to
+    # be dominated by its own sequels/reboots (Superman, Superman
+    # II, Superman Returns, Man of Steel all sharing near-identical
+    # genre/cast/keyword vectors). This reduces recommendations being
+    # dominated by closely related sequel, reboot, or title-family
+    # entries — it detects shared, distinctive title vocabulary, not
+    # franchises as a concept.
+    # ==================================================
+
+    _IGNORED_TITLE_WORDS = {
+        "the", "a", "an", "of", "and", "to", "in", "on",
+        "for", "part", "chapter",
+    }
+
+    @classmethod
+    def _title_tokens(cls, title):
+        if not title:
+            return frozenset()
+        words = re.findall(r"[a-z0-9]+", str(title).lower())
+        return frozenset(w for w in words if w not in cls._IGNORED_TITLE_WORDS)
+
+    # A word appearing in more than this many titles is treated as
+    # generic (e.g. "up", "man", "war") rather than a franchise marker
+    # (e.g. "thor", "hulk", "smurfs" — almost always DF <= 4).
+    _GENERIC_WORD_MAX_DF = 10
+
+    def _is_same_family(self, tokens_a, tokens_b):
+        if not tokens_a or not tokens_b:
+            return False
+
+        shared = tokens_a.intersection(tokens_b)
+        if not shared:
+            return False
+
+        # Require at least one shared word that's actually distinctive.
+        # This is what lets "Thor" match "Thor: The Dark World" (DF=2)
+        # while stopping "Up" from matching "Knocked Up" (DF=20) —
+        # without a blanket ban on single-token titles, which would
+        # have also broken "Thor" and "Hulk" style franchise matches.
+        if not any(self.title_word_df.get(w, 0) <= self._GENERIC_WORD_MAX_DF for w in shared):
+            return False
+
+        smaller = min(len(tokens_a), len(tokens_b))
+        overlap = len(shared)
+        return (overlap / smaller) >= 0.6
+
+    def get_recommendations(self, title, n=10, diversify=True):
 
         idx = self.title_lookup.get(
             str(title).strip().lower()
@@ -201,25 +269,71 @@ class MovieRecommendationEngine:
         scores[idx] = -np.inf
 
         # ---------------------------------
-        # Get top N
+        # Rank all candidates once (descending)
+        # ---------------------------------
+        #
+        # We rank everything rather than just top-N because
+        # diversity filtering may skip some high-scoring
+        # franchise-mates, so we need a deeper candidate pool
+        # to fill back in from.
         # ---------------------------------
 
-        count = min(n, len(scores) - 1)
+        ranked = np.argsort(scores)[::-1]
 
-        candidates = np.argpartition(
-            scores,
-            -count
-        )[-count:]
+        if not diversify:
+            selected = [
+                i for i in ranked[:n]
+                if scores[i] > -np.inf
+            ]
 
-        candidates = candidates[
-            np.argsort(scores[candidates])[::-1]
-        ]
+        else:
+            selected = []
+            selected_tokens = []
+            skipped = []
 
-        # ---------------------------------
-        # Build result
-        # ---------------------------------
+            target_tokens = self.title_tokens[idx]
 
-        result = self.df.iloc[candidates][
+            for candidate_idx in ranked:
+                if scores[candidate_idx] <= -np.inf:
+                    break
+
+                candidate_tokens = self.title_tokens[candidate_idx]
+
+                # Allow a sequel/reboot of the movie being queried.
+                # Example:
+                #   Toy Story -> Toy Story 2
+                #   Dark Knight -> Dark Knight Rises
+                #
+                # But once one member of a title family has been
+                # selected, don't add another member of that family.
+                same_as_selected = any(
+                    self._is_same_family(
+                        candidate_tokens,
+                        selected_title_tokens
+                    )
+                    for selected_title_tokens in selected_tokens
+                )
+
+                if same_as_selected:
+                    skipped.append(candidate_idx)
+                    continue
+
+                selected.append(candidate_idx)
+                selected_tokens.append(candidate_tokens)
+
+                if len(selected) >= n:
+                    break
+
+            # If there aren't enough diverse candidates, fill the
+            # remaining slots with the highest-ranked skipped movies.
+            if len(selected) < n:
+                for candidate_idx in skipped:
+                    selected.append(candidate_idx)
+
+                    if len(selected) >= n:
+                        break
+
+        result = self.df.iloc[selected][
             [
                 "id",
                 "title",
@@ -229,7 +343,7 @@ class MovieRecommendationEngine:
         ].copy()
 
         result["similarity_score"] = np.round(
-            scores[candidates],
+            scores[selected],
             6
         )
         return result.reset_index(drop=True)
