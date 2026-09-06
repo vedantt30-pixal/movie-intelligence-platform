@@ -15,20 +15,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://movie-intelligence-platform-1.onrender.com",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Make the repo root importable regardless of where this process is
 # launched from. Without this, `uvicorn backend.main:app` (run from
 # the repo root) works, but `cd backend && uvicorn main:app` fails
@@ -70,7 +56,10 @@ TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 # Comma-separated list, e.g. "https://myapp.vercel.app,http://localhost:5173"
 CORS_ORIGINS = [
     origin.strip()
-    for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,https://movie-intelligence-platform-1.onrender.com",
+    ).split(",")
     if origin.strip()
 ]
 
