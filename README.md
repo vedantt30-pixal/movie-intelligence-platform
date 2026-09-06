@@ -162,17 +162,7 @@ movie-intelligence-platform/
 
 ---
 
-## 🔐 Environment Variables
 
-Create a `.env` file locally:
-
-```env
-TMDB_API_KEY=your_tmdb_api_key
-```
-
-The API key should never be committed to GitHub.
-
----
 
 ## 📌 Project Status
 
