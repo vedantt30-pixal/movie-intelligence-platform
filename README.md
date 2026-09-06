@@ -94,3 +94,28 @@ The selected movie itself is always excluded from the recommendations.
                     │   TMDB Dataset   │
                     │ Movies + Credits │
                     └──────────────────┘
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React, Vite, CSS
+- **Backend:** FastAPI, Python
+- **Machine Learning:** TF-IDF, Cosine Similarity
+- **Data:** TMDB 5000 Movies Dataset
+- **Movie Metadata:** TMDB API
+- **Deployment:** Render
+
+## 🧠 How It Works
+
+The recommendation engine uses content-based filtering. Movie metadata such as genres, keywords, cast, and directors is combined into a text representation and transformed using TF-IDF. Cosine similarity is then used to find movies with the most similar content.
+
+## 📌 Project Status
+
+**Live and deployed** 🚀
+
+The application is currently available through the live demo above.
+
+## 👨‍💻 Author
+
+**Vedant Mhaskar**
+
+GitHub: [@vedantt30-pixal](https://github.com/vedantt30-pixal)
