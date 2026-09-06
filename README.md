@@ -6,6 +6,19 @@ The project combines a **Python recommendation engine**, **FastAPI backend**, an
 
 ---
 
+## 🚀 Live Demo
+
+👉 **[Try Movie Intelligence](https://movie-intelligence-platform-1.onrender.com)**
+
+### 🔗 Services
+
+- **Frontend:** https://movie-intelligence-platform-1.onrender.com
+- **Backend API:** https://movie-intelligence-platform.onrender.com
+- **API Documentation:** https://movie-intelligence-platform.onrender.com/docs
+- **Health Check:** https://movie-intelligence-platform.onrender.com/health
+
+---
+
 ## ✨ Features
 
 - 🎬 Search for a movie and receive recommendations
