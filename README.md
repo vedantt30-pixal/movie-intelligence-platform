@@ -32,6 +32,7 @@ The project combines a **Python recommendation engine**, **FastAPI backend**, an
 - ⚛️ React + Vite frontend
 - ⌨️ Supports pressing Enter to search
 - 🛡️ Handles unknown and partial movie titles
+- 🔄 Recommendation diversification
 - ✅ Automated tests with pytest
 
 ---
@@ -83,10 +84,10 @@ The selected movie itself is always excluded from the recommendations.
                              │
                              ▼
                  ┌────────────────────────┐
-                 │ Recommendation Engine  │
+                 │  Recommendation Engine │
                  │                        │
-                 │ TF-IDF + Cosine        │
-                 │ Similarity              │
+                 │ TF-IDF + Cosine       │
+                 │ Similarity             │
                  └───────────┬────────────┘
                              │
                              ▼
@@ -94,6 +95,9 @@ The selected movie itself is always excluded from the recommendations.
                     │   TMDB Dataset   │
                     │ Movies + Credits │
                     └──────────────────┘
+```
+
+---
 
 ## 🛠️ Tech Stack
 
@@ -102,17 +106,81 @@ The selected movie itself is always excluded from the recommendations.
 - **Machine Learning:** TF-IDF, Cosine Similarity
 - **Data:** TMDB 5000 Movies Dataset
 - **Movie Metadata:** TMDB API
+- **Testing:** pytest
 - **Deployment:** Render
 
-## 🧠 How It Works
+---
 
-The recommendation engine uses content-based filtering. Movie metadata such as genres, keywords, cast, and directors is combined into a text representation and transformed using TF-IDF. Cosine similarity is then used to find movies with the most similar content.
+## 🔌 API Example
+
+### Get Recommendations
+
+```http
+GET /recommendations/Avatar?n=10&diversify=true
+```
+
+Example response:
+
+```json
+{
+  "movie": "Avatar",
+  "recommendations": [
+    {
+      "title": "Star Trek Into Darkness",
+      "vote_average": 7.4,
+      "similarity_score": 0.384488
+    }
+  ]
+}
+```
+
+### Health Check
+
+```http
+GET /health
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+movie-intelligence-platform/
+├── backend/
+│   └── main.py
+├── frontend/
+│   ├── src/
+│   └── package.json
+├── src/
+│   └── recommendation_engine.py
+├── data/
+│   └── raw/
+├── tests/
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file locally:
+
+```env
+TMDB_API_KEY=your_tmdb_api_key
+```
+
+The API key should never be committed to GitHub.
+
+---
 
 ## 📌 Project Status
 
 **Live and deployed** 🚀
 
 The application is currently available through the live demo above.
+
+---
 
 ## 👨‍💻 Author
 
